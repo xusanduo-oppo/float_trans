@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>浮点格式可视化转换器 | 对齐官方规范</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: #f5f7fa; color: #1f2329; padding: 24px; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { font-size: 24px; margin-bottom: 8px; }
+        .subtitle { color: #6b7280; margin-bottom: 24px; font-size: 14px; }
+
+        .control-bar {
+            background: #fff; border-radius: 10px; padding: 16px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 20px;
+            display: flex; gap: 24px; flex-wrap: wrap; align-items: center;
+        }
+        .control-group { display: flex; flex-direction: column; gap: 6px; }
+        .control-group label { font-size: 13px; color: #4b5563; font-weight: 500; }
+        select, input[type="number"], input[type="text"] {
+            padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px;
+            font-size: 14px; background: #fff; min-width: 180px;
+        }
+        select:focus, input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+
+        .custom-params {
+            display: none; gap: 16px; flex-wrap: wrap;
+            padding-top: 12px; margin-top: 12px; border-top: 1px solid #e5e7eb;
+        }
+        .custom-params.active { display: flex; }
+        .custom-params .control-group input { width: 100px; min-width: auto; }
+
+        .main-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;
+        }
+        .panel {
+            background: #fff; border-radius: 10px; padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .panel h2 { font-size: 18px; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #e5e7eb; }
+
+        .field { margin-bottom: 16px; }
+        .field label { display: block; font-size: 13px; color: #4b5563; margin-bottom: 6px; font-weight: 500; }
+        .field input { width: 100%; font-family: monospace; font-size: 15px; }
+
+        .bits-display {
+            margin: 16px 0; padding: 12px; background: #f9fafb; border-radius: 8px;
+            font-family: "Courier New", monospace; font-size: 18px; letter-spacing: 4px;
+            display: flex; flex-wrap: wrap; gap: 2px; user-select: none;
+        }
+        .bit {
+            width: 28px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 4px; cursor: pointer; transition: all 0.15s; font-weight: 500;
+        }
+        .bit:hover { transform: scale(1.15); }
+        .bit.sign { background: #fee2e2; color: #b91c1c; }
+        .bit.exp { background: #dbeafe; color: #1d4ed8; }
+        .bit.mant { background: #dcfce7; color: #15803d; }
+
+        .hex-display {
+            font-family: monospace; font-size: 18px; padding: 10px 14px;
+            background: #f3f4f6; border-radius: 6px; display: inline-block;
+        }
+
+        .legend { display: flex; gap: 16px; font-size: 12px; color: #6b7280; margin-top: 8px; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+        .details-section {
+            background: #fff; border-radius: 10px; padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 20px;
+        }
+        .details-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 12px;
+        }
+        .detail-card {
+            background: #f9fafb; padding: 12px; border-radius: 8px; text-align: center;
+        }
+        .detail-card .label { font-size: 12px; color: #6b7280; margin-bottom: 4px; }
+        .detail-card .value { font-size: 18px; font-weight: 600; font-family: monospace; }
+
+        .formula {
+            margin-top: 16px; padding: 14px; background: #eff6ff; border-radius: 8px;
+            font-family: "Times New Roman", serif; font-size: 16px; text-align: center;
+            color: #1e40af;
+        }
+
+        .mx-section {
+            margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 8px;
+            font-size: 14px; color: #92400e; display: none;
+        }
+        .mx-section.active { display: block; }
+
+        @media (max-width: 900px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .details-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔢 浮点格式可视化转换器</h1>
+        <p class="subtitle">对齐 PyTorch / OCP 官方规范 · 纯前端离线可用</p>
+
+        <div class="control-bar">
+            <div class="control-group">
+                <label>格式选择</label>
+                <select id="formatSelect">
+                    <option value="e4m3fn">torch.float8_e4m3fn (NVIDIA)</option>
+                    <option value="e4m3fnuz">torch.float8_e4m3fnuz (AMD)</option>
+                    <option value="e5m2">torch.float8_e5m2</option>
+                    <option value="e8m0fnu">torch.float8_e8m0fnu (MX缩放因子)</option>
+                    <option value="mxfp4">MXFP4 (E2M1, OCP)</option>
+                    <option value="custom">自定义格式</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>舍入模式</label>
+                <select id="roundingSelect">
+                    <option value="round_even">就近舍入，偶优先 (IEEE 默认)</option>
+                    <option value="trunc">向零截断</option>
+                    <option value="ceil">向正无穷舍入</option>
+                    <option value="floor">向负无穷舍入</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>MX 块缩放</label>
+                <select id="mxScaleToggle">
+                    <option value="off">关闭</option>
+                    <option value="on">启用 E8M0 缩放因子</option>
+                </select>
+            </div>
+
+            <div class="custom-params" id="customParams">
+                <div class="control-group">
+                    <label>符号位</label>
+                    <input type="number" id="signBits" value="1" min="0" max="1">
+                </div>
+                <div class="control-group">
+                    <label>指数位</label>
+                    <input type="number" id="expBits" value="5" min="0" max="15">
+                </div>
+                <div class="control-group">
+                    <label>尾数位</label>
+                    <input type="number" id="mantBits" value="10" min="0" max="64">
+                </div>
+                <div class="control-group">
+                    <label>指数偏移 Bias</label>
+                    <input type="number" id="biasVal" value="15" min="0">
+                </div>
+                <div class="control-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="hasInf" checked>
+                    <label for="hasInf" style="margin: 0;">支持 Inf</label>
+                </div>
+                <div class="control-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="hasNaN" checked>
+                    <label for="hasNaN" style="margin: 0;">支持 NaN</label>
+                </div>
+                <div class="control-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="hasDenorm" checked>
+                    <label for="hasDenorm" style="margin: 0;">支持次正规数</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="panel">
+                <h2>输入值</h2>
+                <div class="field">
+                    <label>十进制数值 (Decimal Input)</label>
+                    <input type="number" id="decimalInput" value="0.5" step="any">
+                </div>
+                <div class="field">
+                    <label>二进制表示 (Binary Representation) · 点击位可翻转</label>
+                    <div class="bits-display" id="bitsDisplay"></div>
+                </div>
+                <div class="field">
+                    <label>十六进制表示 (Hex Representation)</label>
+                    <input type="text" id="hexInput" value="30" style="font-family: monospace; text-transform: uppercase;">
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><span class="legend-dot" style="background:#fee2e2"></span>符号位</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#dbeafe"></span>指数位</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#dcfce7"></span>尾数位</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>存储结果</h2>
+                <div class="field">
+                    <label>实际存储值 (Value Stored)</label>
+                    <div class="hex-display" id="storedValue" style="width: 100%; background: #ecfdf5; color: #065f46;">0.5</div>
+                </div>
+                <div class="field">
+                    <label>二进制位模式</label>
+                    <div class="bits-display" id="bitsDisplayOut" style="cursor: default;"></div>
+                </div>
+                <div class="field">
+                    <label>十六进制值</label>
+                    <div class="hex-display" id="hexOutput">0x30</div>
+                </div>
+                <div class="mx-section" id="mxSection">
+                    <strong>MX 缩放因子 (E8M0):</strong>
+                    <span id="mxScaleVal">1.0</span>
+                    <span id="mxScaleHex" style="font-family: monospace; margin-left: 8px;">(0x7F)</span>
+                    <br>
+                    最终值 = 元素值 × 缩放因子 = <strong id="mxFinalVal">0.5</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="details-section">
+            <h2>字段详细分解</h2>
+            <div class="details-grid">
+                <div class="detail-card">
+                    <div class="label">符号位 Sign</div>
+                    <div class="value" id="detailSign">0</div>
+                </div>
+                <div class="detail-card">
+                    <div class="label">偏置指数 Biased Exp</div>
+                    <div class="value" id="detailRawExp">6</div>
+                </div>
+                <div class="detail-card">
+                    <div class="label">实际指数 Actual Exp</div>
+                    <div class="value" id="detailExp">-1</div>
+                </div>
+                <div class="detail-card">
+                    <div class="label">数值类型</div>
+                    <div class="value" id="detailType" style="font-size: 14px;">正规数</div>
+                </div>
+            </div>
+            <div class="details-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 12px;">
+                <div class="detail-card">
+                    <div class="label">原始尾数整数</div>
+                    <div class="value" id="detailRawMant">0</div>
+                </div>
+                <div class="detail-card">
+                    <div class="label">尾数实际值</div>
+                    <div class="value" id="detailMantVal">1.000000</div>
+                </div>
+                <div class="detail-card">
+                    <div class="label">指数偏移 Bias</div>
+                    <div class="value" id="detailBias">7</div>
+                </div>
+            </div>
+            <div class="formula" id="formula">
+                (-1)⁰ × 1.0 × 2⁻¹ = 0.5
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const FORMAT_PRESETS = {
+            e4m3fn: {
+                sign_bits: 1, exp_bits: 4, mant_bits: 3,
+                bias: 7, has_inf: false, has_nan: true, has_denorm: true,
+                name: "float8_e4m3fn"
+            },
+            e4m3fnuz: {
+                sign_bits: 1, exp_bits: 4, mant_bits: 3,
+                bias: 8, has_inf: false, has_nan: false, has_denorm: true,
+                name: "float8_e4m3fnuz"
+            },
+            e5m2: {
+                sign_bits: 1, exp_bits: 5, mant_bits: 2,
+                bias: 15, has_inf: true, has_nan: true, has_denorm: true,
+                name: "float8_e5m2"
+            },
+            e8m0fnu: {
+                sign_bits: 0, exp_bits: 8, mant_bits: 0,
+                bias: 127, has_inf: false, has_nan: false, has_denorm: false,
+                name: "float8_e8m0fnu"
+            },
+            mxfp4: {
+                sign_bits: 1, exp_bits: 2, mant_bits: 1,
+                bias: 1, has_inf: false, has_nan: false, has_denorm: true,
+                name: "MXFP4 E2M1"
+            }
+        };
+
+        let currentFormat = { ...FORMAT_PRESETS.e4m3fn };
+        let currentRaw = 0x30;
+        let isUpdating = false;
+
+        // ========== 核心编解码 ==========
+        function encodeFloat(value, fmt, rounding = 'round_even') {
+            const { sign_bits, exp_bits, mant_bits, bias, has_inf, has_nan, has_denorm } = fmt;
+            const totalBits = sign_bits + exp_bits + mant_bits;
+            if (totalBits === 0) return { raw: 0, stored: 0 };
+
+            let sign = 0;
+            let absVal = Math.abs(value);
+            if (sign_bits === 1) {
+                sign = value < 0 ? 1 : 0;
+                absVal = Math.abs(value);
+            }
+
+            const maxRawExp = (1 << exp_bits) - 1;
+            const isFullExpSpecial = has_inf || has_nan;
+            const maxNormalRawExp = isFullExpSpecial ? maxRawExp - 1 : maxRawExp;
+            const maxExp = maxNormalRawExp - bias;
+            const minNormalExp = has_denorm ? 1 - bias : 0 - bias;
+
+            if (absVal === 0) {
+                if (!has_denorm) {
+                    const raw = sign << (exp_bits + mant_bits);
+                    const decoded = decodeFloat(raw, fmt);
+                    return { raw, stored: sign ? -decoded.stored : decoded.stored };
+                }
+                return { raw: sign << (exp_bits + mant_bits), stored: sign ? -0 : 0 };
+            }
+
+            if (isNaN(value)) {
+                if (!has_nan) {
+                    const maxMant = (1 << mant_bits) - 1;
+                    const raw = (sign << (exp_bits + mant_bits)) | (maxNormalRawExp << mant_bits) | maxMant;
+                    const decoded = decodeFloat(raw, fmt);
+                    return { raw, stored: sign ? -decoded.stored : decoded.stored };
+                }
+                const raw = (sign << (exp_bits + mant_bits)) | (maxRawExp << mant_bits) | 1;
+                return { raw, stored: NaN };
+            }
+
+            if (!isFinite(absVal)) {
+                if (!has_inf) {
+                    const maxMant = (1 << mant_bits) - 1;
+                    const raw = (sign << (exp_bits + mant_bits)) | (maxNormalRawExp << mant_bits) | maxMant;
+                    const decoded = decodeFloat(raw, fmt);
+                    return { raw, stored: sign ? -decoded.stored : decoded.stored };
+                }
+                const raw = (sign << (exp_bits + mant_bits)) | (maxRawExp << mant_bits);
+                return { raw, stored: sign ? -Infinity : Infinity };
+            }
+
+            let exp = Math.floor(Math.log2(absVal));
+            let mant = absVal / (2 ** exp);
+            if (mant >= 2) { mant /= 2; exp += 1; }
+
+            if (exp > maxExp) {
+                const maxMant = (1 << mant_bits) - 1;
+                const raw = (sign << (exp_bits + mant_bits)) | (maxNormalRawExp << mant_bits) | maxMant;
+                const decoded = decodeFloat(raw, fmt);
+                return { raw, stored: sign ? -decoded.stored : decoded.stored };
+            }
+
+            let rawExp, mantFrac;
+            if (exp < minNormalExp) {
+                if (!has_denorm) {
+                    const raw = sign << (exp_bits + mant_bits);
+                    const decoded = decodeFloat(raw, fmt);
+                    return { raw, stored: sign ? -decoded.stored : decoded.stored };
+                }
+                const shift = minNormalExp - exp;
+                mant = mant / (2 ** shift);
+                rawExp = 0;
+                mantFrac = mant;
+            } else {
+                rawExp = exp + bias;
+                mantFrac = mant - 1;
+            }
+
+            const mantScaled = mantFrac * (1 << mant_bits);
+            let rawMant;
+            switch (rounding) {
+                case 'round_even':
+                    rawMant = Math.round(mantScaled);
+                    if (Math.abs(mantScaled - Math.floor(mantScaled)) === 0.5) {
+                        rawMant = Math.floor(mantScaled) % 2 === 0 ? Math.floor(mantScaled) : Math.ceil(mantScaled);
+                    }
+                    break;
+                case 'trunc': rawMant = Math.trunc(mantScaled); break;
+                case 'ceil': rawMant = Math.ceil(mantScaled); break;
+                case 'floor': rawMant = Math.floor(mantScaled); break;
+                default: rawMant = Math.round(mantScaled);
+            }
+
+            if (mant_bits > 0 && rawMant >= (1 << mant_bits)) {
+                rawMant = 0;
+                rawExp += 1;
+                if (rawExp > maxNormalRawExp) {
+                    if (has_inf) {
+                        const raw = (sign << (exp_bits + mant_bits)) | (maxRawExp << mant_bits);
+                        return { raw, stored: sign ? -Infinity : Infinity };
+                    } else {
+                        rawExp = maxNormalRawExp;
+                        rawMant = (1 << mant_bits) - 1;
+                    }
+                }
+            }
+
+            rawMant &= (1 << mant_bits) - 1;
+            rawExp &= maxRawExp;
+            let raw = (sign << (exp_bits + mant_bits)) | (rawExp << mant_bits) | rawMant;
+            raw &= (1 << totalBits) - 1;
+
+            const decoded = decodeFloat(raw, fmt);
+            return { raw, stored: decoded.stored };
+        }
+
+        function decodeFloat(raw, fmt) {
+            const { sign_bits, exp_bits, mant_bits, bias, has_inf, has_nan, has_denorm } = fmt;
+            const totalBits = sign_bits + exp_bits + mant_bits;
+            raw &= (1 << totalBits) - 1;
+
+            const mantMask = mant_bits > 0 ? (1 << mant_bits) - 1 : 0;
+            const expMask = exp_bits > 0 ? (1 << exp_bits) - 1 : 0;
+            const rawMant = raw & mantMask;
+            const rawExp = mant_bits > 0 ? (raw >> mant_bits) & expMask : raw & expMask;
+            const sign = sign_bits === 1 ? (raw >> (exp_bits + mant_bits)) & 1 : 0;
+
+            let type = "正规数", mantVal, actualExp;
+
+            if (exp_bits > 0 && rawExp === expMask) {
+                if (has_inf) {
+                    if (rawMant === 0) {
+                        type = "无穷大 (Inf)";
+                        return { stored: sign ? -Infinity : Infinity, sign, rawExp, rawMant, type, actualExp: Infinity, mantVal: Infinity };
+                    } else if (has_nan) {
+                        type = "非数值 (NaN)";
+                        return { stored: NaN, sign, rawExp, rawMant, type, actualExp: NaN, mantVal: NaN };
+                    }
+                } else if (has_nan) {
+                    type = "非数值 (NaN)";
+                    return { stored: NaN, sign, rawExp, rawMant, type, actualExp: NaN, mantVal: NaN };
+                }
+                mantVal = mant_bits > 0 ? 1 + rawMant / (1 << mant_bits) : 1;
+                actualExp = rawExp - bias;
+            } else if (exp_bits > 0 && rawExp === 0) {
+                if (!has_denorm) {
+                    type = "正规数";
+                    mantVal = 1;
+                    actualExp = 0 - bias;
+                } else {
+                    if (rawMant === 0) { type = "零"; mantVal = 0; }
+                    else { type = "次正规数"; mantVal = rawMant / (1 << mant_bits); }
+                    actualExp = 1 - bias;
+                }
+            } else {
+                mantVal = mant_bits > 0 ? 1 + rawMant / (1 << mant_bits) : 1;
+                actualExp = exp_bits > 0 ? rawExp - bias : 0;
+            }
+
+            let value = mantVal * (2 ** actualExp);
+            if (sign) value = -value;
+            return { stored: value, sign, rawExp, rawMant, type, actualExp, mantVal };
+        }
+
+        // ========== UI 逻辑 ==========
+        function getCurrentFormat() {
+            const selected = document.getElementById('formatSelect').value;
+            if (selected === 'custom') {
+                return {
+                    sign_bits: parseInt(document.getElementById('signBits').value) || 0,
+                    exp_bits: parseInt(document.getElementById('expBits').value) || 0,
+                    mant_bits: parseInt(document.getElementById('mantBits').value) || 0,
+                    bias: parseInt(document.getElementById('biasVal').value) || 0,
+                    has_inf: document.getElementById('hasInf').checked,
+                    has_nan: document.getElementById('hasNaN').checked,
+                    has_denorm: document.getElementById('hasDenorm').checked
+                };
+            }
+            return { ...FORMAT_PRESETS[selected] };
+        }
+
+        // 修复：位渲染与点击翻转
+        function renderBits(raw, fmt, container, clickable = false) {
+            const { sign_bits, exp_bits, mant_bits } = fmt;
+            const totalBits = sign_bits + exp_bits + mant_bits;
+            const binStr = raw.toString(2).padStart(totalBits, '0');
+            container.innerHTML = '';
+
+            let index = 0;
+
+            // 符号位
+            for (let i = 0; i < sign_bits; i++) {
+                const bitEl = document.createElement('span');
+                bitEl.className = 'bit sign';
+                bitEl.textContent = binStr[index];
+                if (clickable) {
+                    const pos = index; // 固化当前索引
+                    bitEl.addEventListener('click', () => flipBit(pos));
+                }
+                container.appendChild(bitEl);
+                index++;
+            }
+
+            // 指数位
+            for (let i = 0; i < exp_bits; i++) {
+                const bitEl = document.createElement('span');
+                bitEl.className = 'bit exp';
+                bitEl.textContent = binStr[index];
+                if (clickable) {
+                    const pos = index;
+                    bitEl.addEventListener('click', () => flipBit(pos));
+                }
+                container.appendChild(bitEl);
+                index++;
+            }
+
+            // 尾数位
+            for (let i = 0; i < mant_bits; i++) {
+                const bitEl = document.createElement('span');
+                bitEl.className = 'bit mant';
+                bitEl.textContent = binStr[index];
+                if (clickable) {
+                    const pos = index;
+                    bitEl.addEventListener('click', () => flipBit(pos));
+                }
+                container.appendChild(bitEl);
+                index++;
+            }
+        }
+
+        // 修复：按索引翻转对应位，左高右低
+        function flipBit(pos) {
+            const fmt = getCurrentFormat();
+            const totalBits = fmt.sign_bits + fmt.exp_bits + fmt.mant_bits;
+            // pos=0 对应最左最高位，位权 = 2^(totalBits-1-pos)
+            const mask = 1 << (totalBits - 1 - pos);
+            currentRaw ^= mask;
+            currentRaw &= (1 << totalBits) - 1; // 位宽截断防溢出
+            updateFromRaw();
+        }
+
+        function updateFromDecimal() {
+            if (isUpdating) return;
+            isUpdating = true;
+            const fmt = getCurrentFormat();
+            const value = parseFloat(document.getElementById('decimalInput').value);
+            const rounding = document.getElementById('roundingSelect').value;
+            const result = encodeFloat(value, fmt, rounding);
+            currentRaw = result.raw;
+            updateDisplays(result.stored, fmt, false);
+            isUpdating = false;
+        }
+
+        function onDecimalBlur() {
+            const fmt = getCurrentFormat();
+            const value = parseFloat(document.getElementById('decimalInput').value) || 0;
+            const rounding = document.getElementById('roundingSelect').value;
+            const result = encodeFloat(value, fmt, rounding);
+            document.getElementById('decimalInput').value = result.stored;
+        }
+
+        function updateFromHex() {
+            if (isUpdating) return;
+            isUpdating = true;
+            const fmt = getCurrentFormat();
+            const totalBits = fmt.sign_bits + fmt.exp_bits + fmt.mant_bits;
+            let hex = document.getElementById('hexInput').value.replace(/^0x/i, '');
+            let raw = parseInt(hex, 16) || 0;
+            raw &= (1 << totalBits) - 1;
+            currentRaw = raw;
+            const decoded = decodeFloat(raw, fmt);
+            updateDisplays(decoded.stored, fmt, true);
+            isUpdating = false;
+        }
+
+        function updateFromRaw() {
+            if (isUpdating) return;
+            isUpdating = true;
+            const fmt = getCurrentFormat();
+            const decoded = decodeFloat(currentRaw, fmt);
+            updateDisplays(decoded.stored, fmt, true);
+            isUpdating = false;
+        }
+
+        function updateDisplays(storedValue, fmt, updateDecimal = true) {
+            const totalBits = fmt.sign_bits + fmt.exp_bits + fmt.mant_bits;
+            const hexLen = Math.ceil(totalBits / 4);
+            const hexStr = currentRaw.toString(16).toUpperCase().padStart(hexLen, '0');
+
+            if (updateDecimal) {
+                document.getElementById('decimalInput').value = storedValue;
+            }
+            document.getElementById('hexInput').value = hexStr;
+
+            renderBits(currentRaw, fmt, document.getElementById('bitsDisplay'), true);
+            renderBits(currentRaw, fmt, document.getElementById('bitsDisplayOut'), false);
+
+            document.getElementById('storedValue').textContent = storedValue;
+            document.getElementById('hexOutput').textContent = '0x' + hexStr;
+
+            const decoded = decodeFloat(currentRaw, fmt);
+            document.getElementById('detailSign').textContent = decoded.sign;
+            document.getElementById('detailRawExp').textContent = decoded.rawExp;
+            document.getElementById('detailExp').textContent = decoded.actualExp;
+            document.getElementById('detailType').textContent = decoded.type;
+            document.getElementById('detailRawMant').textContent = decoded.rawMant;
+            document.getElementById('detailMantVal').textContent = decoded.mantVal.toFixed(6);
+            document.getElementById('detailBias').textContent = fmt.bias;
+
+            let formula = '';
+            if (fmt.sign_bits) formula += `(-1)<sup>${decoded.sign}</sup> × `;
+            formula += `${decoded.mantVal.toFixed(4)}`;
+            if (fmt.exp_bits) formula += ` × 2<sup>${decoded.actualExp}</sup>`;
+            formula += ` = ${storedValue}`;
+            document.getElementById('formula').innerHTML = formula;
+
+            updateMxScale(storedValue);
+        }
+
+        function updateMxScale(baseValue) {
+            const mxEnabled = document.getElementById('mxScaleToggle').value === 'on';
+            const mxSection = document.getElementById('mxSection');
+            if (!mxEnabled) {
+                mxSection.classList.remove('active');
+                return;
+            }
+            mxSection.classList.add('active');
+            const scaleRaw = 127;
+            const scaleVal = 2 ** (scaleRaw - 127);
+            const finalVal = baseValue * scaleVal;
+            document.getElementById('mxScaleVal').textContent = scaleVal;
+            document.getElementById('mxScaleHex').textContent = `(0x${scaleRaw.toString(16).toUpperCase().padStart(2,'0')})`;
+            document.getElementById('mxFinalVal').textContent = finalVal.toFixed(6);
+        }
+
+        // ========== 初始化 ==========
+        function init() {
+            document.getElementById('formatSelect').addEventListener('change', () => {
+                const isCustom = document.getElementById('formatSelect').value === 'custom';
+                document.getElementById('customParams').classList.toggle('active', isCustom);
+                updateFromDecimal();
+            });
+
+            document.getElementById('roundingSelect').addEventListener('change', updateFromDecimal);
+            document.getElementById('mxScaleToggle').addEventListener('change', () => updateFromRaw());
+
+            document.getElementById('decimalInput').addEventListener('input', updateFromDecimal);
+            document.getElementById('decimalInput').addEventListener('blur', onDecimalBlur);
+            document.getElementById('hexInput').addEventListener('input', updateFromHex);
+
+            ['signBits', 'expBits', 'mantBits', 'biasVal', 'hasInf', 'hasNaN', 'hasDenorm'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updateFromDecimal);
+                document.getElementById(id).addEventListener('change', updateFromDecimal);
+            });
+
+            updateFromDecimal();
+        }
+
+        init();
+    </script>
+</body>
+</html>
