@@ -3,55 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>浮点格式可视化转换器 | 对齐官方规范</title>
+    <title>浮点格式可视化转换器 | FP64~FP4 全格式支持</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: #f5f7fa; color: #1f2329; padding: 24px; line-height: 1.6; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        h1 { font-size: 24px; margin-bottom: 8px; }
-        .subtitle { color: #6b7280; margin-bottom: 24px; font-size: 14px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; }
+        body { 
+            background: #f8fafc; 
+            color: #0f172a; 
+            padding: 32px 20px; 
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container { max-width: 1280px; margin: 0 auto; }
+        h1 { 
+            font-size: 28px; 
+            font-weight: 600; 
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
+        }
+        .subtitle { 
+            color: #64748b; 
+            margin-bottom: 28px; 
+            font-size: 14px; 
+        }
 
         .control-bar {
-            background: #fff; border-radius: 10px; padding: 16px 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 20px;
-            display: flex; gap: 24px; flex-wrap: wrap; align-items: center;
+            background: #fff; 
+            border-radius: 12px; 
+            padding: 18px 24px;
+            box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05), 0 1px 3px 0 rgba(0,0,0,0.08); 
+            margin-bottom: 24px;
+            display: flex; 
+            gap: 28px; 
+            flex-wrap: wrap; 
+            align-items: flex-end;
         }
         .control-group { display: flex; flex-direction: column; gap: 6px; }
-        .control-group label { font-size: 13px; color: #4b5563; font-weight: 500; }
-        select, input[type="number"], input[type="text"] {
-            padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px;
-            font-size: 14px; background: #fff; min-width: 180px;
+        .control-group label { 
+            font-size: 12px; 
+            color: #475569; 
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
-        select:focus, input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        select, input[type="number"], input[type="text"] {
+            padding: 8px 12px; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 8px;
+            font-size: 14px; 
+            background: #fff; 
+            min-width: 200px;
+            transition: all 0.15s ease;
+        }
+        select:focus, input:focus { 
+            outline: none; 
+            border-color: #3b82f6; 
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.12); 
+        }
 
         .custom-params {
-            display: none; gap: 16px; flex-wrap: wrap;
-            padding-top: 12px; margin-top: 12px; border-top: 1px solid #e5e7eb;
+            display: none; 
+            gap: 16px; 
+            flex-wrap: wrap;
+            width: 100%;
+            padding-top: 16px; 
+            margin-top: 12px; 
+            border-top: 1px solid #e2e8f0;
         }
         .custom-params.active { display: flex; }
         .custom-params .control-group input { width: 100px; min-width: auto; }
+        .control-group.checkbox-group {
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+        }
 
         .main-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 24px; 
+            margin-bottom: 24px;
         }
         .panel {
-            background: #fff; border-radius: 10px; padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            background: #fff; 
+            border-radius: 12px; 
+            padding: 24px;
+            box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05), 0 1px 3px 0 rgba(0,0,0,0.08);
         }
-        .panel h2 { font-size: 18px; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #e5e7eb; }
+        .panel h2 { 
+            font-size: 16px; 
+            font-weight: 600; 
+            margin-bottom: 20px; 
+            padding-bottom: 12px; 
+            border-bottom: 1px solid #e2e8f0;
+            color: #1e293b;
+        }
 
-        .field { margin-bottom: 16px; }
-        .field label { display: block; font-size: 13px; color: #4b5563; margin-bottom: 6px; font-weight: 500; }
-        .field input { width: 100%; font-family: monospace; font-size: 15px; }
+        .field { margin-bottom: 20px; }
+        .field label { 
+            display: block; 
+            font-size: 12px; 
+            color: #475569; 
+            margin-bottom: 8px; 
+            font-weight: 500;
+        }
+        .field input { 
+            width: 100%; 
+            font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; 
+            font-size: 14px; 
+        }
 
         .bits-display {
-            margin: 16px 0; padding: 12px; background: #f9fafb; border-radius: 8px;
-            font-family: "Courier New", monospace; font-size: 18px; letter-spacing: 4px;
-            display: flex; flex-wrap: wrap; gap: 2px; user-select: none;
+            margin: 16px 0; 
+            padding: 14px; 
+            background: #f8fafc; 
+            border-radius: 8px;
+            font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; 
+            font-size: 13px; 
+            letter-spacing: 0;
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 3px; 
+            user-select: none;
         }
         .bit {
-            width: 28px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
-            border-radius: 4px; cursor: pointer; transition: all 0.15s; font-weight: 500;
+            width: 20px; 
+            height: 24px; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center;
+            border-radius: 4px; 
+            cursor: pointer; 
+            transition: all 0.15s ease; 
+            font-weight: 500;
+            font-size: 12px;
         }
         .bit:hover { transform: scale(1.15); }
         .bit.sign { background: #fee2e2; color: #b91c1c; }
@@ -59,40 +143,88 @@
         .bit.mant { background: #dcfce7; color: #15803d; }
 
         .hex-display {
-            font-family: monospace; font-size: 18px; padding: 10px 14px;
-            background: #f3f4f6; border-radius: 6px; display: inline-block;
+            font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace; 
+            font-size: 16px; 
+            padding: 10px 14px;
+            background: #f0fdf4; 
+            border-radius: 8px; 
+            display: inline-block;
+            color: #166534;
+            width: 100%;
+            word-break: break-all;
         }
 
-        .legend { display: flex; gap: 16px; font-size: 12px; color: #6b7280; margin-top: 8px; }
+        .legend { 
+            display: flex; 
+            gap: 20px; 
+            font-size: 12px; 
+            color: #64748b; 
+            margin-top: 8px; 
+        }
         .legend-item { display: flex; align-items: center; gap: 6px; }
         .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
 
         .details-section {
-            background: #fff; border-radius: 10px; padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 20px;
+            background: #fff; 
+            border-radius: 12px; 
+            padding: 24px;
+            box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05), 0 1px 3px 0 rgba(0,0,0,0.08); 
+            margin-bottom: 24px;
+        }
+        .details-section h2 {
+            font-size: 16px; 
+            font-weight: 600; 
+            margin-bottom: 16px;
+            color: #1e293b;
         }
         .details-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 12px;
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 12px; 
+            margin-top: 12px;
         }
         .detail-card {
-            background: #f9fafb; padding: 12px; border-radius: 8px; text-align: center;
+            background: #f8fafc; 
+            padding: 14px; 
+            border-radius: 8px; 
+            text-align: center;
         }
-        .detail-card .label { font-size: 12px; color: #6b7280; margin-bottom: 4px; }
-        .detail-card .value { font-size: 18px; font-weight: 600; font-family: monospace; }
+        .detail-card .label { 
+            font-size: 11px; 
+            color: #64748b; 
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .detail-card .value { 
+            font-size: 16px; 
+            font-weight: 600; 
+            font-family: "JetBrains Mono", monospace; 
+        }
 
         .formula {
-            margin-top: 16px; padding: 14px; background: #eff6ff; border-radius: 8px;
-            font-family: "Times New Roman", serif; font-size: 16px; text-align: center;
+            margin-top: 20px; 
+            padding: 16px; 
+            background: #eff6ff; 
+            border-radius: 8px;
+            font-family: "Times New Roman", serif; 
+            font-size: 17px; 
+            text-align: center;
             color: #1e40af;
         }
 
         .mx-section {
-            margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 8px;
-            font-size: 14px; color: #92400e; display: none;
+            margin-top: 16px; 
+            padding: 14px; 
+            background: #fef3c7; 
+            border-radius: 8px;
+            font-size: 13px; 
+            color: #92400e; 
+            display: none;
         }
         .mx-section.active { display: block; }
 
-        @media (max-width: 900px) {
+        @media (max-width: 960px) {
             .main-grid { grid-template-columns: 1fr; }
             .details-grid { grid-template-columns: repeat(2, 1fr); }
         }
@@ -101,16 +233,21 @@
 <body>
     <div class="container">
         <h1>🔢 浮点格式可视化转换器</h1>
-        <p class="subtitle">对齐 PyTorch / OCP 官方规范 · 纯前端离线可用</p>
+        <p class="subtitle">支持 FP64 / FP32 / TF32 / BF16 / FP16 / FP8 / MXFP4 全系列 · 纯前端离线计算</p>
 
         <div class="control-bar">
             <div class="control-group">
-                <label>格式选择</label>
+                <label>浮点格式</label>
                 <select id="formatSelect">
-                    <option value="e4m3fn">torch.float8_e4m3fn (NVIDIA)</option>
-                    <option value="e4m3fnuz">torch.float8_e4m3fnuz (AMD)</option>
-                    <option value="e5m2">torch.float8_e5m2</option>
-                    <option value="e8m0fnu">torch.float8_e8m0fnu (MX缩放因子)</option>
+                    <option value="fp64">FP64 (IEEE 754 Double)</option>
+                    <option value="fp32">FP32 (IEEE 754 Float)</option>
+                    <option value="tf32">TF32 (TensorFloat-32, NVIDIA)</option>
+                    <option value="bf16">BF16 (BFloat16)</option>
+                    <option value="fp16">FP16 (IEEE 754 Half)</option>
+                    <option value="e4m3fn">FP8 E4M3FN (NVIDIA)</option>
+                    <option value="e4m3fnuz">FP8 E4M3FNUZ (AMD)</option>
+                    <option value="e5m2">FP8 E5M2</option>
+                    <option value="e8m0fnu">FP8 E8M0FNU (MX缩放因子)</option>
                     <option value="mxfp4">MXFP4 (E2M1, OCP)</option>
                     <option value="custom">自定义格式</option>
                 </select>
@@ -151,15 +288,15 @@
                     <label>指数偏移 Bias</label>
                     <input type="number" id="biasVal" value="15" min="0">
                 </div>
-                <div class="control-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                <div class="control-group checkbox-group">
                     <input type="checkbox" id="hasInf" checked>
                     <label for="hasInf" style="margin: 0;">支持 Inf</label>
                 </div>
-                <div class="control-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                <div class="control-group checkbox-group">
                     <input type="checkbox" id="hasNaN" checked>
                     <label for="hasNaN" style="margin: 0;">支持 NaN</label>
                 </div>
-                <div class="control-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                <div class="control-group checkbox-group">
                     <input type="checkbox" id="hasDenorm" checked>
                     <label for="hasDenorm" style="margin: 0;">支持次正规数</label>
                 </div>
@@ -174,12 +311,12 @@
                     <input type="number" id="decimalInput" value="0.5" step="any">
                 </div>
                 <div class="field">
-                    <label>二进制表示 (Binary Representation) · 点击位可翻转</label>
+                    <label>二进制位模式 · 点击翻转</label>
                     <div class="bits-display" id="bitsDisplay"></div>
                 </div>
                 <div class="field">
-                    <label>十六进制表示 (Hex Representation)</label>
-                    <input type="text" id="hexInput" value="30" style="font-family: monospace; text-transform: uppercase;">
+                    <label>十六进制表示 (Hex)</label>
+                    <input type="text" id="hexInput" value="3F000000" style="font-family: monospace; text-transform: uppercase;">
                 </div>
                 <div class="legend">
                     <div class="legend-item"><span class="legend-dot" style="background:#fee2e2"></span>符号位</div>
@@ -192,7 +329,7 @@
                 <h2>存储结果</h2>
                 <div class="field">
                     <label>实际存储值 (Value Stored)</label>
-                    <div class="hex-display" id="storedValue" style="width: 100%; background: #ecfdf5; color: #065f46;">0.5</div>
+                    <div class="hex-display" id="storedValue">0.5</div>
                 </div>
                 <div class="field">
                     <label>二进制位模式</label>
@@ -200,7 +337,7 @@
                 </div>
                 <div class="field">
                     <label>十六进制值</label>
-                    <div class="hex-display" id="hexOutput">0x30</div>
+                    <div class="hex-display" id="hexOutput">0x3F000000</div>
                 </div>
                 <div class="mx-section" id="mxSection">
                     <strong>MX 缩放因子 (E8M0):</strong>
@@ -221,7 +358,7 @@
                 </div>
                 <div class="detail-card">
                     <div class="label">偏置指数 Biased Exp</div>
-                    <div class="value" id="detailRawExp">6</div>
+                    <div class="value" id="detailRawExp">126</div>
                 </div>
                 <div class="detail-card">
                     <div class="label">实际指数 Actual Exp</div>
@@ -229,7 +366,7 @@
                 </div>
                 <div class="detail-card">
                     <div class="label">数值类型</div>
-                    <div class="value" id="detailType" style="font-size: 14px;">正规数</div>
+                    <div class="value" id="detailType" style="font-size: 13px;">正规数</div>
                 </div>
             </div>
             <div class="details-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 12px;">
@@ -243,7 +380,7 @@
                 </div>
                 <div class="detail-card">
                     <div class="label">指数偏移 Bias</div>
-                    <div class="value" id="detailBias">7</div>
+                    <div class="value" id="detailBias">127</div>
                 </div>
             </div>
             <div class="formula" id="formula">
@@ -253,26 +390,52 @@
     </div>
 
     <script>
+        // ===================== 格式预设（严格对齐官方规范）=====================
         const FORMAT_PRESETS = {
+            fp64: {
+                sign_bits: 1, exp_bits: 11, mant_bits: 52,
+                bias: 1023, has_inf: true, has_nan: true, has_denorm: true,
+                name: "FP64 Double"
+            },
+            fp32: {
+                sign_bits: 1, exp_bits: 8, mant_bits: 23,
+                bias: 127, has_inf: true, has_nan: true, has_denorm: true,
+                name: "FP32 Float"
+            },
+            tf32: {
+                sign_bits: 1, exp_bits: 8, mant_bits: 10,
+                bias: 127, has_inf: true, has_nan: true, has_denorm: true,
+                name: "TF32 TensorFloat"
+            },
+            bf16: {
+                sign_bits: 1, exp_bits: 8, mant_bits: 7,
+                bias: 127, has_inf: true, has_nan: true, has_denorm: true,
+                name: "BF16 BFloat16"
+            },
+            fp16: {
+                sign_bits: 1, exp_bits: 5, mant_bits: 10,
+                bias: 15, has_inf: true, has_nan: true, has_denorm: true,
+                name: "FP16 Half"
+            },
             e4m3fn: {
                 sign_bits: 1, exp_bits: 4, mant_bits: 3,
                 bias: 7, has_inf: false, has_nan: true, has_denorm: true,
-                name: "float8_e4m3fn"
+                name: "FP8 E4M3FN"
             },
             e4m3fnuz: {
                 sign_bits: 1, exp_bits: 4, mant_bits: 3,
                 bias: 8, has_inf: false, has_nan: false, has_denorm: true,
-                name: "float8_e4m3fnuz"
+                name: "FP8 E4M3FNUZ"
             },
             e5m2: {
                 sign_bits: 1, exp_bits: 5, mant_bits: 2,
                 bias: 15, has_inf: true, has_nan: true, has_denorm: true,
-                name: "float8_e5m2"
+                name: "FP8 E5M2"
             },
             e8m0fnu: {
                 sign_bits: 0, exp_bits: 8, mant_bits: 0,
                 bias: 127, has_inf: false, has_nan: false, has_denorm: false,
-                name: "float8_e8m0fnu"
+                name: "FP8 E8M0FNU"
             },
             mxfp4: {
                 sign_bits: 1, exp_bits: 2, mant_bits: 1,
@@ -281,15 +444,22 @@
             }
         };
 
-        let currentFormat = { ...FORMAT_PRESETS.e4m3fn };
-        let currentRaw = 0x30;
+        let currentFormat = { ...FORMAT_PRESETS.fp32 };
+        let currentRaw = 0x3F000000n; // 使用 BigInt 支持 64 位
         let isUpdating = false;
 
-        // ========== 核心编解码 ==========
+        // ===================== 核心编解码（BigInt 版本，支持任意位宽）=====================
         function encodeFloat(value, fmt, rounding = 'round_even') {
             const { sign_bits, exp_bits, mant_bits, bias, has_inf, has_nan, has_denorm } = fmt;
             const totalBits = sign_bits + exp_bits + mant_bits;
-            if (totalBits === 0) return { raw: 0, stored: 0 };
+            if (totalBits === 0) return { raw: 0n, stored: 0 };
+
+            const BIAS = BigInt(bias);
+            const MAX_RAW_EXP = (1n << BigInt(exp_bits)) - 1n;
+            const isFullExpSpecial = has_inf || has_nan;
+            const maxNormalRawExp = isFullExpSpecial ? MAX_RAW_EXP - 1n : MAX_RAW_EXP;
+            const maxExp = Number(maxNormalRawExp - BIAS);
+            const minNormalExp = has_denorm ? 1 - bias : 0 - bias;
 
             let sign = 0;
             let absVal = Math.abs(value);
@@ -298,72 +468,77 @@
                 absVal = Math.abs(value);
             }
 
-            const maxRawExp = (1 << exp_bits) - 1;
-            const isFullExpSpecial = has_inf || has_nan;
-            const maxNormalRawExp = isFullExpSpecial ? maxRawExp - 1 : maxRawExp;
-            const maxExp = maxNormalRawExp - bias;
-            const minNormalExp = has_denorm ? 1 - bias : 0 - bias;
-
+            // 零值
             if (absVal === 0) {
                 if (!has_denorm) {
-                    const raw = sign << (exp_bits + mant_bits);
+                    const raw = BigInt(sign) << BigInt(exp_bits + mant_bits);
                     const decoded = decodeFloat(raw, fmt);
                     return { raw, stored: sign ? -decoded.stored : decoded.stored };
                 }
-                return { raw: sign << (exp_bits + mant_bits), stored: sign ? -0 : 0 };
+                const raw = BigInt(sign) << BigInt(exp_bits + mant_bits);
+                return { raw, stored: sign ? -0 : 0 };
             }
 
+            // NaN
             if (isNaN(value)) {
                 if (!has_nan) {
-                    const maxMant = (1 << mant_bits) - 1;
-                    const raw = (sign << (exp_bits + mant_bits)) | (maxNormalRawExp << mant_bits) | maxMant;
+                    const maxMant = (1n << BigInt(mant_bits)) - 1n;
+                    const raw = (BigInt(sign) << BigInt(exp_bits + mant_bits)) | (maxNormalRawExp << BigInt(mant_bits)) | maxMant;
                     const decoded = decodeFloat(raw, fmt);
                     return { raw, stored: sign ? -decoded.stored : decoded.stored };
                 }
-                const raw = (sign << (exp_bits + mant_bits)) | (maxRawExp << mant_bits) | 1;
+                const raw = (BigInt(sign) << BigInt(exp_bits + mant_bits)) | (MAX_RAW_EXP << BigInt(mant_bits)) | 1n;
                 return { raw, stored: NaN };
             }
 
+            // 无穷大
             if (!isFinite(absVal)) {
                 if (!has_inf) {
-                    const maxMant = (1 << mant_bits) - 1;
-                    const raw = (sign << (exp_bits + mant_bits)) | (maxNormalRawExp << mant_bits) | maxMant;
+                    const maxMant = (1n << BigInt(mant_bits)) - 1n;
+                    const raw = (BigInt(sign) << BigInt(exp_bits + mant_bits)) | (maxNormalRawExp << BigInt(mant_bits)) | maxMant;
                     const decoded = decodeFloat(raw, fmt);
                     return { raw, stored: sign ? -decoded.stored : decoded.stored };
                 }
-                const raw = (sign << (exp_bits + mant_bits)) | (maxRawExp << mant_bits);
+                const raw = (BigInt(sign) << BigInt(exp_bits + mant_bits)) | (MAX_RAW_EXP << BigInt(mant_bits));
                 return { raw, stored: sign ? -Infinity : Infinity };
             }
 
+            // 计算指数和尾数
             let exp = Math.floor(Math.log2(absVal));
             let mant = absVal / (2 ** exp);
+
             if (mant >= 2) { mant /= 2; exp += 1; }
 
+            // 上溢饱和
             if (exp > maxExp) {
-                const maxMant = (1 << mant_bits) - 1;
-                const raw = (sign << (exp_bits + mant_bits)) | (maxNormalRawExp << mant_bits) | maxMant;
+                const maxMant = (1n << BigInt(mant_bits)) - 1n;
+                const raw = (BigInt(sign) << BigInt(exp_bits + mant_bits)) | (maxNormalRawExp << BigInt(mant_bits)) | maxMant;
                 const decoded = decodeFloat(raw, fmt);
                 return { raw, stored: sign ? -decoded.stored : decoded.stored };
             }
 
             let rawExp, mantFrac;
+
+            // 下溢处理
             if (exp < minNormalExp) {
                 if (!has_denorm) {
-                    const raw = sign << (exp_bits + mant_bits);
+                    const raw = BigInt(sign) << BigInt(exp_bits + mant_bits);
                     const decoded = decodeFloat(raw, fmt);
                     return { raw, stored: sign ? -decoded.stored : decoded.stored };
                 }
                 const shift = minNormalExp - exp;
                 mant = mant / (2 ** shift);
-                rawExp = 0;
+                rawExp = 0n;
                 mantFrac = mant;
             } else {
-                rawExp = exp + bias;
+                rawExp = BigInt(exp + bias);
                 mantFrac = mant - 1;
             }
 
             const mantScaled = mantFrac * (1 << mant_bits);
             let rawMant;
+
+            // 舍入
             switch (rounding) {
                 case 'round_even':
                     rawMant = Math.round(mantScaled);
@@ -377,24 +552,28 @@
                 default: rawMant = Math.round(mantScaled);
             }
 
-            if (mant_bits > 0 && rawMant >= (1 << mant_bits)) {
-                rawMant = 0;
-                rawExp += 1;
+            rawMant = BigInt(rawMant);
+
+            // 尾数进位溢出
+            if (mant_bits > 0 && rawMant >= (1n << BigInt(mant_bits))) {
+                rawMant = 0n;
+                rawExp += 1n;
                 if (rawExp > maxNormalRawExp) {
                     if (has_inf) {
-                        const raw = (sign << (exp_bits + mant_bits)) | (maxRawExp << mant_bits);
+                        const raw = (BigInt(sign) << BigInt(exp_bits + mant_bits)) | (MAX_RAW_EXP << BigInt(mant_bits));
                         return { raw, stored: sign ? -Infinity : Infinity };
                     } else {
                         rawExp = maxNormalRawExp;
-                        rawMant = (1 << mant_bits) - 1;
+                        rawMant = (1n << BigInt(mant_bits)) - 1n;
                     }
                 }
             }
 
-            rawMant &= (1 << mant_bits) - 1;
-            rawExp &= maxRawExp;
-            let raw = (sign << (exp_bits + mant_bits)) | (rawExp << mant_bits) | rawMant;
-            raw &= (1 << totalBits) - 1;
+            rawMant &= (1n << BigInt(mant_bits)) - 1n;
+            rawExp &= MAX_RAW_EXP;
+
+            let raw = (BigInt(sign) << BigInt(exp_bits + mant_bits)) | (rawExp << BigInt(mant_bits)) | rawMant;
+            raw &= (1n << BigInt(totalBits)) - 1n;
 
             const decoded = decodeFloat(raw, fmt);
             return { raw, stored: decoded.stored };
@@ -403,52 +582,67 @@
         function decodeFloat(raw, fmt) {
             const { sign_bits, exp_bits, mant_bits, bias, has_inf, has_nan, has_denorm } = fmt;
             const totalBits = sign_bits + exp_bits + mant_bits;
-            raw &= (1 << totalBits) - 1;
+            raw = BigInt(raw) & ((1n << BigInt(totalBits)) - 1n);
 
-            const mantMask = mant_bits > 0 ? (1 << mant_bits) - 1 : 0;
-            const expMask = exp_bits > 0 ? (1 << exp_bits) - 1 : 0;
+            const mantMask = mant_bits > 0 ? (1n << BigInt(mant_bits)) - 1n : 0n;
+            const expMask = exp_bits > 0 ? (1n << BigInt(exp_bits)) - 1n : 0n;
+
             const rawMant = raw & mantMask;
-            const rawExp = mant_bits > 0 ? (raw >> mant_bits) & expMask : raw & expMask;
-            const sign = sign_bits === 1 ? (raw >> (exp_bits + mant_bits)) & 1 : 0;
+            const rawExp = mant_bits > 0 ? (raw >> BigInt(mant_bits)) & expMask : raw & expMask;
+            const sign = sign_bits === 1 ? Number((raw >> BigInt(exp_bits + mant_bits)) & 1n) : 0;
 
             let type = "正规数", mantVal, actualExp;
 
+            // 指数全1：特殊值
             if (exp_bits > 0 && rawExp === expMask) {
                 if (has_inf) {
-                    if (rawMant === 0) {
+                    if (rawMant === 0n) {
                         type = "无穷大 (Inf)";
-                        return { stored: sign ? -Infinity : Infinity, sign, rawExp, rawMant, type, actualExp: Infinity, mantVal: Infinity };
+                        return { stored: sign ? -Infinity : Infinity, sign, rawExp: Number(rawExp), rawMant: Number(rawMant), type, actualExp: Infinity, mantVal: Infinity };
                     } else if (has_nan) {
                         type = "非数值 (NaN)";
-                        return { stored: NaN, sign, rawExp, rawMant, type, actualExp: NaN, mantVal: NaN };
+                        return { stored: NaN, sign, rawExp: Number(rawExp), rawMant: Number(rawMant), type, actualExp: NaN, mantVal: NaN };
                     }
                 } else if (has_nan) {
                     type = "非数值 (NaN)";
-                    return { stored: NaN, sign, rawExp, rawMant, type, actualExp: NaN, mantVal: NaN };
+                    return { stored: NaN, sign, rawExp: Number(rawExp), rawMant: Number(rawMant), type, actualExp: NaN, mantVal: NaN };
                 }
-                mantVal = mant_bits > 0 ? 1 + rawMant / (1 << mant_bits) : 1;
-                actualExp = rawExp - bias;
-            } else if (exp_bits > 0 && rawExp === 0) {
+                mantVal = mant_bits > 0 ? 1 + Number(rawMant) / (1 << mant_bits) : 1;
+                actualExp = Number(rawExp) - bias;
+            }
+            // 指数全0：次正规/零
+            else if (exp_bits > 0 && rawExp === 0n) {
                 if (!has_denorm) {
                     type = "正规数";
                     mantVal = 1;
                     actualExp = 0 - bias;
                 } else {
-                    if (rawMant === 0) { type = "零"; mantVal = 0; }
-                    else { type = "次正规数"; mantVal = rawMant / (1 << mant_bits); }
+                    if (rawMant === 0n) { type = "零"; mantVal = 0; }
+                    else { type = "次正规数"; mantVal = Number(rawMant) / (1 << mant_bits); }
                     actualExp = 1 - bias;
                 }
-            } else {
-                mantVal = mant_bits > 0 ? 1 + rawMant / (1 << mant_bits) : 1;
-                actualExp = exp_bits > 0 ? rawExp - bias : 0;
+            }
+            // 正规数
+            else {
+                mantVal = mant_bits > 0 ? 1 + Number(rawMant) / (1 << mant_bits) : 1;
+                actualExp = exp_bits > 0 ? Number(rawExp) - bias : 0;
             }
 
             let value = mantVal * (2 ** actualExp);
             if (sign) value = -value;
-            return { stored: value, sign, rawExp, rawMant, type, actualExp, mantVal };
+
+            return { 
+                stored: value, 
+                sign, 
+                rawExp: Number(rawExp), 
+                rawMant: Number(rawMant), 
+                type, 
+                actualExp, 
+                mantVal 
+            };
         }
 
-        // ========== UI 逻辑 ==========
+        // ===================== UI 逻辑 =====================
         function getCurrentFormat() {
             const selected = document.getElementById('formatSelect').value;
             if (selected === 'custom') {
@@ -465,7 +659,6 @@
             return { ...FORMAT_PRESETS[selected] };
         }
 
-        // 修复：位渲染与点击翻转
         function renderBits(raw, fmt, container, clickable = false) {
             const { sign_bits, exp_bits, mant_bits } = fmt;
             const totalBits = sign_bits + exp_bits + mant_bits;
@@ -480,7 +673,7 @@
                 bitEl.className = 'bit sign';
                 bitEl.textContent = binStr[index];
                 if (clickable) {
-                    const pos = index; // 固化当前索引
+                    const pos = index;
                     bitEl.addEventListener('click', () => flipBit(pos));
                 }
                 container.appendChild(bitEl);
@@ -514,14 +707,12 @@
             }
         }
 
-        // 修复：按索引翻转对应位，左高右低
         function flipBit(pos) {
             const fmt = getCurrentFormat();
             const totalBits = fmt.sign_bits + fmt.exp_bits + fmt.mant_bits;
-            // pos=0 对应最左最高位，位权 = 2^(totalBits-1-pos)
-            const mask = 1 << (totalBits - 1 - pos);
+            const mask = 1n << BigInt(totalBits - 1 - pos);
             currentRaw ^= mask;
-            currentRaw &= (1 << totalBits) - 1; // 位宽截断防溢出
+            currentRaw &= (1n << BigInt(totalBits)) - 1n;
             updateFromRaw();
         }
 
@@ -551,8 +742,8 @@
             const fmt = getCurrentFormat();
             const totalBits = fmt.sign_bits + fmt.exp_bits + fmt.mant_bits;
             let hex = document.getElementById('hexInput').value.replace(/^0x/i, '');
-            let raw = parseInt(hex, 16) || 0;
-            raw &= (1 << totalBits) - 1;
+            let raw = hex ? BigInt('0x' + hex) : 0n;
+            raw &= (1n << BigInt(totalBits)) - 1n;
             currentRaw = raw;
             const decoded = decodeFloat(raw, fmt);
             updateDisplays(decoded.stored, fmt, true);
@@ -619,7 +810,7 @@
             document.getElementById('mxFinalVal').textContent = finalVal.toFixed(6);
         }
 
-        // ========== 初始化 ==========
+        // ===================== 初始化 =====================
         function init() {
             document.getElementById('formatSelect').addEventListener('change', () => {
                 const isCustom = document.getElementById('formatSelect').value === 'custom';
